@@ -58,8 +58,12 @@ function parseInput(str, displayMode) {
  *             diff: number|null, manualFields: string[] }}
  */
 function createRow() {
+  // crypto.randomUUID() requires HTTPS; fallback for HTTP
+  var id = (typeof crypto !== "undefined" && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2);
   return {
-    id: crypto.randomUUID(),
+    id: id,
     point: "",
     bs: null,
     fs: null,
