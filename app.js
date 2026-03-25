@@ -62,7 +62,6 @@ var App = (function () {
     document.getElementById("view-file-list").classList.add("hidden");
     document.getElementById("view-editor").classList.remove("hidden");
     document.getElementById("editor-title").textContent = _currentFile.name;
-    _updateModeButtons();
     _updateIHButton();
     _recalcAndRender();
 
@@ -218,37 +217,12 @@ var App = (function () {
       _saveCurrentFile();
     });
 
-    // Mode toggle: m
-    document.getElementById("btn-mode-m").addEventListener("click", function () {
-      if (!_currentFile) { return; }
-      _currentFile.displayMode = "m";
-      _updateModeButtons();
-      _recalcAndRender();
-      _saveCurrentFile();
-    });
-
-    // Mode toggle: mm
-    document.getElementById("btn-mode-mm").addEventListener("click", function () {
-      if (!_currentFile) { return; }
-      _currentFile.displayMode = "mm";
-      _updateModeButtons();
-      _recalcAndRender();
-      _saveCurrentFile();
-    });
-
     // IH column toggle
     document.getElementById("btn-toggle-ih").addEventListener("click", function () {
       _showIH = !_showIH;
       _updateIHButton();
       _recalcAndRender();
     });
-  }
-
-  function _updateModeButtons() {
-    if (!_currentFile) { return; }
-    var isM = _currentFile.displayMode === "m";
-    document.getElementById("btn-mode-m").classList.toggle("active", isM);
-    document.getElementById("btn-mode-mm").classList.toggle("active", !isM);
   }
 
   function _updateIHButton() {
