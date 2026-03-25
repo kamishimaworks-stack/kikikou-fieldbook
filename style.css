@@ -195,7 +195,7 @@ th.sticky-col {
 
 /* Insert zone between rows */
 .insert-zone {
-  height: 4px;
+  height: 20px;
   cursor: pointer;
   transition: height 0.15s ease, background-color 0.15s ease;
   text-align: center;

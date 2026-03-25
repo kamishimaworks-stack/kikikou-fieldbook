@@ -6,7 +6,7 @@
  * @param {number|null} value
  * @returns {number|null}
  */
-export function roundM(value) {
+function roundM(value) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return null;
   }
@@ -19,7 +19,7 @@ export function roundM(value) {
  * @param {"m"|"mm"} displayMode
  * @returns {string}
  */
-export function formatValue(value, displayMode) {
+function formatValue(value, displayMode) {
   if (value === null || value === undefined) {
     return "";
   }
@@ -36,7 +36,7 @@ export function formatValue(value, displayMode) {
  * @param {"m"|"mm"} displayMode
  * @returns {number|null}
  */
-export function parseInput(str, displayMode) {
+function parseInput(str, displayMode) {
   if (str === null || str === undefined || String(str).trim() === "") {
     return null;
   }
@@ -57,7 +57,7 @@ export function parseInput(str, displayMode) {
  *             gh: number|null, fh: number|null, ih: number|null,
  *             diff: number|null, manualFields: string[] }}
  */
-export function createRow() {
+function createRow() {
   return {
     id: crypto.randomUUID(),
     point: "",
@@ -101,7 +101,7 @@ function isNum(v) {
  * @param {Array<Object>} rows
  * @returns {Array<Object>} — new array of new row objects
  */
-export function recalculate(rows) {
+function recalculate(rows) {
   let prevIH = null; // carried-forward instrument height
 
   return rows.map((row) => {
