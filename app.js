@@ -424,21 +424,80 @@ var App = (function () {
   }
 
   /**
-   * Insert zones add a new row at the clicked position.
+   * Insert zones: long press to show insert menu (above/below).
    */
   function _bindInsertZones() {
     var zones = document.querySelectorAll(".insert-zone");
     for (var z = 0; z < zones.length; z++) {
-      zones[z].addEventListener("click", _onInsertZoneClick);
+      _attachInsertZoneGesture(zones[z]);
     }
   }
 
-  function _onInsertZoneClick() {
-    var index = parseInt(this.dataset.index, 10);
-    if (!_currentFile) { return; }
-    _currentFile.rows.splice(index, 0, createRow());
-    _recalcAndRender();
-    _saveCurrentFile();
+  function _attachInsertZoneGesture(el) {
+    var timer = null;
+    el.addEventListener("touchstart", function (e) {
+      var index = parseInt(el.dataset.index, 10);
+      timer = setTimeout(function () {
+        _showInsertMenu(el, index);
+      }, 400);
+    }, { passive: true });
+    el.addEventListener("touchend", function () { clearTimeout(timer); }, { passive: true });
+    el.addEventListener("touchmove", function () { clearTimeout(timer); }, { passive: true });
+    // Desktop: click to show menu
+    el.addEventListener("click", function () {
+      var index = parseInt(el.dataset.index, 10);
+      _showInsertMenu(el, index);
+    });
+  }
+
+  function _showInsertMenu(anchorEl, index) {
+    // Remove existing menu if any
+    var old = document.getElementById("insert-menu");
+    if (old) { old.remove(); }
+
+    var menu = document.createElement("div");
+    menu.id = "insert-menu";
+    menu.className = "insert-menu";
+
+    var btnAbove = document.createElement("button");
+    btnAbove.textContent = "↑ 上に行を追加";
+    btnAbove.addEventListener("click", function () {
+      menu.remove();
+      if (!_currentFile) { return; }
+      _currentFile.rows.splice(index, 0, createRow());
+      _recalcAndRender();
+      _saveCurrentFile();
+    });
+
+    var btnBelow = document.createElement("button");
+    btnBelow.textContent = "↓ 下に行を追加";
+    btnBelow.addEventListener("click", function () {
+      menu.remove();
+      if (!_currentFile) { return; }
+      _currentFile.rows.splice(index + 1, 0, createRow());
+      _recalcAndRender();
+      _saveCurrentFile();
+    });
+
+    menu.appendChild(btnAbove);
+    menu.appendChild(btnBelow);
+
+    // Position near the anchor
+    var rect = anchorEl.getBoundingClientRect();
+    menu.style.position = "fixed";
+    menu.style.left = Math.max(10, rect.left) + "px";
+    menu.style.top = rect.bottom + "px";
+    document.body.appendChild(menu);
+
+    // Close on tap outside
+    setTimeout(function () {
+      document.addEventListener("click", function closeMenu(e) {
+        if (!menu.contains(e.target)) {
+          menu.remove();
+          document.removeEventListener("click", closeMenu);
+        }
+      });
+    }, 10);
   }
 
   // ===== Row Deletion: Long Press & Left Swipe =====
