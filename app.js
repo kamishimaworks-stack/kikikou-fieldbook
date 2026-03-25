@@ -254,12 +254,15 @@ var App = (function () {
 
       html += '<tr data-row-id="' + _escapeHtml(row.id) + '" data-row-index="' + i + '">';
 
-      // Column 1: Point (text input, native keyboard)
+      // Column 1: Point (text input + row menu button)
       html +=
         '<td class="sticky-col">' +
-          '<input class="cell-input" type="text"' +
-          ' data-field="point" data-row="' + i + '"' +
-          ' value="' + _escapeHtml(row.point) + '">' +
+          '<div class="point-cell">' +
+            '<button class="row-menu-btn" data-row-index="' + i + '" data-row-id="' + _escapeHtml(row.id) + '">⋮</button>' +
+            '<input class="cell-input" type="text"' +
+            ' data-field="point" data-row="' + i + '"' +
+            ' value="' + _escapeHtml(row.point) + '">' +
+          '</div>' +
         '</td>';
 
       // Column 2: BS (keypad)
@@ -323,7 +326,7 @@ var App = (function () {
   function _bindCellEvents() {
     _bindKeypadCells();
     _bindPointInputs();
-    _bindRowGestures();
+    _bindRowMenuButtons();
   }
 
   /**
@@ -386,41 +389,20 @@ var App = (function () {
     }
   }
 
-  // ===== Row Long Press: Context Menu (add above/below, delete) =====
+  // ===== Row Menu Button =====
 
-  function _bindRowGestures() {
-    var dataRows = document.querySelectorAll("#table-body tr[data-row-id]");
-    for (var r = 0; r < dataRows.length; r++) {
-      _attachRowGesture(dataRows[r]);
+  function _bindRowMenuButtons() {
+    var btns = document.querySelectorAll(".row-menu-btn");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", _onRowMenuClick);
     }
   }
 
-  function _attachRowGesture(el) {
-    var timer = null;
-    var moved = false;
-
-    el.addEventListener("touchstart", function (e) {
-      moved = false;
-      timer = setTimeout(function () {
-        if (!moved) {
-          _showRowMenu(el);
-        }
-      }, 500);
-    }, { passive: true });
-
-    el.addEventListener("touchmove", function () {
-      moved = true;
-      clearTimeout(timer);
-    }, { passive: true });
-
-    el.addEventListener("touchend", function () {
-      clearTimeout(timer);
-    }, { passive: true });
-  }
-
-  function _showRowMenu(rowEl) {
-    var rowId = rowEl.dataset.rowId;
-    var rowIndex = parseInt(rowEl.dataset.rowIndex, 10);
+  function _onRowMenuClick(e) {
+    e.stopPropagation();
+    var btn = this;
+    var rowId = btn.dataset.rowId;
+    var rowIndex = parseInt(btn.dataset.rowIndex, 10);
     if (!_currentFile) { return; }
 
     // Remove existing menu
@@ -461,11 +443,11 @@ var App = (function () {
     menu.appendChild(btnBelow);
     menu.appendChild(btnDelete);
 
-    // Position near the row
-    var rect = rowEl.getBoundingClientRect();
+    // Position near the button
+    var rect = btn.getBoundingClientRect();
     menu.style.position = "fixed";
-    menu.style.left = Math.max(10, (rect.left + rect.right) / 2 - 80) + "px";
-    menu.style.top = Math.min(rect.bottom, window.innerHeight - 160) + "px";
+    menu.style.left = rect.left + "px";
+    menu.style.top = Math.min(rect.bottom + 4, window.innerHeight - 160) + "px";
     document.body.appendChild(menu);
 
     // Close on tap outside
