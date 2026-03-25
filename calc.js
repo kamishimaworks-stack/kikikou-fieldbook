@@ -95,11 +95,14 @@ function isNum(v) {
  *     a. manualFields includes "gh" → keep manual value
  *     b. FS entered and valid IH exists → GH = IH(current) - FS
  *     c. Otherwise → null
- *  2. IH determination:
+ *  2. FS reverse calculation:
+ *     If GH is manual AND FS is NOT manual AND prevIH exists
+ *     → FS = prevIH - GH (auto-calculated)
+ *  3. IH determination:
  *     a. BS entered and GH determined → IH = GH + BS (new instrument height)
  *     b. No BS → carry forward previous IH (not displayed in cell)
- *  3. Diff: GH - FH if both exist, else null
- *  4. Transfer point (BS + FS on same row):
+ *  4. Diff: GH - FH if both exist, else null
+ *  5. Transfer point (BS + FS on same row):
  *     GH computed from OLD IH first, then new IH = GH + BS
  *
  * @param {Array<Object>} rows
@@ -122,6 +125,12 @@ function recalculate(rows) {
       gh = roundM(prevIH - row.fs);
     }
     out.gh = gh;
+
+    // --- FS reverse calculation ---
+    // If GH is manual AND FS is NOT manual AND prevIH exists → FS = prevIH - GH
+    if (manual.includes("gh") && !manual.includes("fs") && isNum(prevIH) && isNum(gh)) {
+      out.fs = roundM(prevIH - gh);
+    }
 
     // --- IH determination ---
     let newIH = prevIH; // default: carry forward

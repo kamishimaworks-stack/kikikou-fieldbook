@@ -7,6 +7,7 @@ var App = (function () {
   var _deletedRow = null;
   var _deletedRowIndex = -1;
   var _toastTimer = null;
+  var _showIH = true;
 
   // ===== Utility =====
 
@@ -47,12 +48,37 @@ var App = (function () {
   function showEditor(fileId) {
     var file = loadFile(fileId);
     if (!file) { return; }
+    var isNewFile = file.rows.length === 0;
     _currentFile = file;
+
+    // Change 2: Fill empty (newly created) file with enough rows for one screen
+    if (isNewFile) {
+      var rowCount = Math.max(5, Math.floor((window.innerHeight - 200) / 44));
+      for (var r = 0; r < rowCount; r++) {
+        _currentFile.rows.push(createRow());
+      }
+    }
+
     document.getElementById("view-file-list").classList.add("hidden");
     document.getElementById("view-editor").classList.remove("hidden");
     document.getElementById("editor-title").textContent = _currentFile.name;
     _updateModeButtons();
+    _updateIHButton();
     _recalcAndRender();
+
+    // Change 3: Scroll to bottom for existing files with data
+    if (!isNewFile) {
+      var hasData = _currentFile.rows.some(function (row) {
+        return row.point !== "" || isNum(row.bs) || isNum(row.fs) ||
+               isNum(row.gh) || isNum(row.fh);
+      });
+      if (hasData) {
+        var wrapper = document.querySelector('.table-wrapper');
+        if (wrapper) {
+          wrapper.scrollTop = wrapper.scrollHeight;
+        }
+      }
+    }
   }
 
   // ===== File List Rendering =====
@@ -209,6 +235,13 @@ var App = (function () {
       _recalcAndRender();
       _saveCurrentFile();
     });
+
+    // IH column toggle
+    document.getElementById("btn-toggle-ih").addEventListener("click", function () {
+      _showIH = !_showIH;
+      _updateIHButton();
+      _recalcAndRender();
+    });
   }
 
   function _updateModeButtons() {
@@ -216,6 +249,10 @@ var App = (function () {
     var isM = _currentFile.displayMode === "m";
     document.getElementById("btn-mode-m").classList.toggle("active", isM);
     document.getElementById("btn-mode-mm").classList.toggle("active", !isM);
+  }
+
+  function _updateIHButton() {
+    document.getElementById("btn-toggle-ih").classList.toggle("active", _showIH);
   }
 
   // ===== Table Rendering =====
@@ -231,6 +268,13 @@ var App = (function () {
     var mode = _currentFile.displayMode;
     var rows = _currentFile.rows;
     var html = "";
+    var colspan = _showIH ? 7 : 6;
+
+    // Update thead IH column visibility
+    var thIH = document.querySelector("#field-table thead th.computed");
+    if (thIH) {
+      thIH.style.display = _showIH ? "" : "none";
+    }
 
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
@@ -239,7 +283,7 @@ var App = (function () {
       // Insert zone between rows (not before first)
       if (i > 0) {
         html +=
-          '<tr class="insert-zone-row"><td colspan="7">' +
+          '<tr class="insert-zone-row"><td colspan="' + colspan + '">' +
             '<div class="insert-zone" data-index="' + i + '"></div>' +
           '</td></tr>';
       }
@@ -257,8 +301,10 @@ var App = (function () {
       // Column 2: BS (keypad)
       html += _renderKeypadCell(row, i, "bs", manual, mode);
 
-      // Column 3: IH (computed, readonly)
-      html += '<td class="computed">' + formatValue(row.ih, mode) + '</td>';
+      // Column 3: IH (computed, readonly) — conditionally shown
+      if (_showIH) {
+        html += '<td class="computed">' + formatValue(row.ih, mode) + '</td>';
+      }
 
       // Column 4: FS (keypad)
       html += _renderKeypadCell(row, i, "fs", manual, mode);

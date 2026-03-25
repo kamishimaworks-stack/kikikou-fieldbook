@@ -55,7 +55,7 @@ function getFileList() {
 
 /**
  * Create a new file with name and displayMode, save to storage, return it.
- * Starts with one empty row (calls createRow() from calc.js).
+ * Starts with empty rows array (app.js fills rows to fit screen).
  * @param {string} name - File name (e.g. "現場名A")
  * @param {string} displayMode - "m" or "mm"
  * @returns {Object} The newly created file object
@@ -70,7 +70,7 @@ function createFile(name, displayMode) {
     displayMode: displayMode,
     createdAt: now,
     updatedAt: now,
-    rows: [createRow()]
+    rows: []
   };
 
   const data = loadAllFiles();
