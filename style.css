@@ -118,11 +118,10 @@ body {
 }
 
 #btn-toggle-ih {
-  flex: 0 0 auto;
-  padding: 8px 12px;
-  margin-left: 4px;
-  font-size: 12px;
-  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  flex: 1;
+  padding: 8px 24px;
+  font-size: 13px;
+  letter-spacing: 2px;
 }
 
 #btn-toggle-ih:not(.active) {

@@ -243,7 +243,7 @@ var App = (function () {
     var rows = _currentFile.rows;
     var html = "";
     // Update thead IH column visibility
-    var thIH = document.querySelector("#field-table thead th.computed");
+    var thIH = document.getElementById("th-ih");
     if (thIH) {
       thIH.style.display = _showIH ? "" : "none";
     }
