@@ -1,0 +1,571 @@
+/* ============================================
+   器高式野帳 PWA — Mobile-First Stylesheet
+   ============================================ */
+
+/* --- CSS Variables --- */
+:root {
+  --color-primary: #3b5998;
+  --color-primary-dark: #2d4373;
+  --color-pink: #fce4ec;
+  --color-manual-indicator: #1976d2;
+  --color-diff-plus: #1565c0;
+  --color-diff-minus: #c62828;
+  --color-bg: #f5f5f5;
+  --color-white: #ffffff;
+  --color-border: #ddd;
+  --color-text: #333;
+  --color-text-light: #777;
+  --header-height: 48px;
+}
+
+/* --- 1. Reset --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- 2. Body --- */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* --- 3. Views --- */
+.view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- 4. Header --- */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  min-height: var(--header-height);
+  padding: 0 12px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.app-header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-header button {
+  background: none;
+  border: none;
+  color: var(--color-white);
+  font-size: 14px;
+  padding: 8px;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- 5. Mode Toggle --- */
+.mode-toggle {
+  display: flex;
+  background-color: var(--color-primary-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mode-toggle button {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.mode-toggle button.active {
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* --- 6. Table --- */
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  table-layout: fixed;
+}
+
+th,
+td {
+  border: 1px solid var(--color-border);
+  text-align: center;
+  vertical-align: middle;
+  min-height: 44px;
+  height: 44px;
+  min-width: 70px;
+  padding: 4px;
+  font-size: 13px;
+}
+
+th {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 600;
+  font-size: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background-color: var(--color-white);
+}
+
+th.sticky-col {
+  z-index: 4;
+}
+
+.computed {
+  background-color: var(--color-pink);
+}
+
+.cell-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 4px;
+  min-height: 36px;
+  outline: none;
+}
+
+.cell-input:focus {
+  background-color: rgba(59, 89, 152, 0.05);
+}
+
+.cell-input.manual {
+  border-bottom: 2px solid var(--color-manual-indicator);
+}
+
+/* Insert zone between rows */
+.insert-zone {
+  height: 4px;
+  cursor: pointer;
+  transition: height 0.15s ease, background-color 0.15s ease;
+  text-align: center;
+  line-height: 24px;
+  font-size: 0;
+  color: var(--color-primary);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.insert-zone:hover,
+.insert-zone:active {
+  height: 24px;
+  background-color: rgba(59, 89, 152, 0.08);
+  font-size: 14px;
+}
+
+.insert-zone:hover::after,
+.insert-zone:active::after {
+  content: "\FF0B";
+}
+
+/* Diff indicators */
+.diff-plus {
+  color: var(--color-diff-plus);
+  font-weight: 700;
+}
+
+.diff-minus {
+  color: var(--color-diff-minus);
+  font-weight: 700;
+}
+
+/* --- 7. Buttons --- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:active {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: #e0e0e0;
+  color: var(--color-text);
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:active {
+  background-color: #bdbdbd;
+}
+
+.btn-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 24px);
+  margin: 12px;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 44px;
+  border: none;
+}
+
+/* --- 8. File List --- */
+.file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  margin: 8px 12px;
+  background-color: var(--color-white);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-height: 44px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.file-card:active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.file-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-card-info h3 {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card-info p {
+  font-size: 12px;
+  color: var(--color-text-light);
+  margin-top: 2px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.file-actions button {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-white);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete {
+  color: #c62828 !important;
+  border-color: #ef9a9a !important;
+}
+
+.btn-delete:active {
+  background-color: #ffebee !important;
+}
+
+/* --- 9. Dialog --- */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  padding: 16px;
+}
+
+.dialog {
+  background-color: var(--color-white);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.dialog h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.dialog input[type="text"],
+.dialog input[type="number"],
+.dialog select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  min-height: 44px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* --- 10. Keypad --- */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.keypad-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  z-index: 200;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.keypad {
+  width: 100%;
+  background-color: var(--color-bg);
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  animation: slideUp 0.25s ease-out;
+}
+
+.keypad-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-size: 14px;
+  min-height: 44px;
+}
+
+.keypad-header button {
+  background: none;
+  border: none;
+  color: var(--color-white);
+  font-size: 14px;
+  padding: 8px;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.keypad-display {
+  padding: 12px 16px;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: right;
+  background-color: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  min-height: 52px;
+  line-height: 28px;
+}
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background-color: var(--color-border);
+}
+
+.keypad-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: var(--color-white);
+  border: none;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 52px;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color 0.1s;
+}
+
+.keypad-key:active {
+  background-color: #e8e8e8;
+}
+
+.keypad-key--action {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.keypad-key--action:active {
+  background-color: var(--color-primary-dark);
+}
+
+.keypad-key--danger {
+  color: #c62828;
+}
+
+/* --- 11. Toast --- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background-color: #323232;
+  color: var(--color-white);
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 300;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-width: calc(100vw - 32px);
+  white-space: nowrap;
+}
+
+.toast-undo {
+  background: none;
+  border: none;
+  color: var(--color-diff-plus);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- 12. Empty State --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 32px;
+  text-align: center;
+  color: var(--color-text-light);
+}
+
+.empty-state p {
+  font-size: 15px;
+  margin-bottom: 16px;
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+/* --- Utility --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

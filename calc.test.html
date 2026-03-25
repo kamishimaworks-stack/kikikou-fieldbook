@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>calc.js tests</title>
+<style>
+  body { font-family: monospace; margin: 2rem; background: #1a1a1a; color: #e0e0e0; }
+  .pass { color: #4caf50; }
+  .fail { color: #f44336; font-weight: bold; }
+  h2 { color: #90caf9; margin-top: 1.5rem; }
+  #summary { margin-top: 2rem; font-size: 1.2rem; padding: 0.5rem; border-top: 1px solid #555; }
+</style>
+</head>
+<body>
+<h1>calc.js &mdash; test runner</h1>
+<div id="log"></div>
+<div id="summary"></div>
+
+<script type="module">
+import {
+  roundM,
+  formatValue,
+  parseInput,
+  createRow,
+  recalculate,
+} from "./calc.js";
+
+const log = document.getElementById("log");
+const summaryEl = document.getElementById("summary");
+let passed = 0;
+let failed = 0;
+let currentGroup = "";
+
+function group(name) {
+  currentGroup = name;
+  const h = document.createElement("h2");
+  h.textContent = name;
+  log.appendChild(h);
+}
+
+function assert(condition, label) {
+  const div = document.createElement("div");
+  if (condition) {
+    passed++;
+    div.className = "pass";
+    div.textContent = `  PASS  ${label}`;
+  } else {
+    failed++;
+    div.className = "fail";
+    div.textContent = `  FAIL  ${label}`;
+    console.error(`FAIL [${currentGroup}]: ${label}`);
+  }
+  log.appendChild(div);
+}
+
+function eq(a, b, label) {
+  assert(a === b, `${label} — expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
+}
+
+// ── roundM ──────────────────────────────────────────
+group("roundM");
+eq(roundM(1.23456), 1.235, "rounds to 3 dp");
+eq(roundM(0), 0, "zero stays zero");
+eq(roundM(null), null, "null returns null");
+eq(roundM(undefined), null, "undefined returns null");
+eq(roundM(NaN), null, "NaN returns null");
+eq(roundM(1.0005), 1.001, "rounds 1.0005 up");
+
+// ── formatValue ─────────────────────────────────────
+group("formatValue (m mode)");
+eq(formatValue(1.234, "m"), "1.234", "3 dp string");
+eq(formatValue(0, "m"), "0.000", "zero formatted");
+eq(formatValue(null, "m"), "", "null → empty");
+eq(formatValue(undefined, "m"), "", "undefined → empty");
+
+group("formatValue (mm mode)");
+eq(formatValue(1.234, "mm"), "1234", "metres to mm integer string");
+eq(formatValue(0.001, "mm"), "1", "1mm");
+eq(formatValue(1.2345, "mm"), "1235", "rounds to nearest mm");
+eq(formatValue(null, "mm"), "", "null → empty");
+
+// ── parseInput ──────────────────────────────────────
+group("parseInput (m mode)");
+eq(parseInput("1.234", "m"), 1.234, "parse metre string");
+eq(parseInput("0", "m"), 0, "parse zero");
+eq(parseInput("", "m"), null, "empty → null");
+eq(parseInput(null, "m"), null, "null → null");
+eq(parseInput("abc", "m"), null, "non-numeric → null");
+
+group("parseInput (mm mode)");
+eq(parseInput("1234", "mm"), 1.234, "mm string → metres");
+eq(parseInput("1", "mm"), 0.001, "1mm → 0.001m");
+eq(parseInput("0", "mm"), 0, "0mm → 0m");
+eq(parseInput("", "mm"), null, "empty → null");
+
+// ── createRow ───────────────────────────────────────
+group("createRow");
+{
+  const r = createRow();
+  assert(typeof r.id === "string" && r.id.length > 0, "has UUID id");
+  eq(r.point, "", "point is empty string");
+  eq(r.bs, null, "bs is null");
+  eq(r.fs, null, "fs is null");
+  eq(r.gh, null, "gh is null");
+  eq(r.fh, null, "fh is null");
+  eq(r.ih, null, "ih is null");
+  eq(r.diff, null, "diff is null");
+  assert(Array.isArray(r.manualFields) && r.manualFields.length === 0, "manualFields is empty array");
+
+  const r2 = createRow();
+  assert(r.id !== r2.id, "two rows have different ids");
+}
+
+// ── recalculate: basic IH ───────────────────────────
+group("recalculate — basic IH (GH + BS = IH)");
+{
+  // First row: known GH (manual), BS entered → IH = GH + BS
+  const rows = [
+    { id: "1", point: "BM1", bs: 1.234, fs: null, gh: 100.0, fh: null, ih: null, diff: null, manualFields: ["gh"] },
+  ];
+  const res = recalculate(rows);
+  eq(res[0].gh, 100.0, "manual GH preserved");
+  eq(res[0].ih, 101.234, "IH = GH(100) + BS(1.234) = 101.234");
+}
+
+// ── recalculate: GH from IH - FS ───────────────────
+group("recalculate — GH = IH - FS");
+{
+  const rows = [
+    { id: "1", point: "BM1", bs: 1.5, fs: null, gh: 100.0, fh: null, ih: null, diff: null, manualFields: ["gh"] },
+    { id: "2", point: "P1",  bs: null, fs: 0.8, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+  ];
+  const res = recalculate(rows);
+  // Row 1: IH = 100 + 1.5 = 101.5
+  eq(res[0].ih, 101.5, "row 1 IH = 101.5");
+  // Row 2: GH = IH(101.5) - FS(0.8) = 100.7
+  eq(res[1].gh, 100.7, "row 2 GH = 101.5 - 0.8 = 100.7");
+  eq(res[1].ih, null, "row 2 IH null (no BS)");
+}
+
+// ── recalculate: diff = GH - FH ────────────────────
+group("recalculate — diff = GH - FH");
+{
+  const rows = [
+    { id: "1", point: "BM1", bs: 1.5, fs: null, gh: 100.0, fh: null, ih: null, diff: null, manualFields: ["gh"] },
+    { id: "2", point: "P1",  bs: null, fs: 0.8, gh: null, fh: 100.5, ih: null, diff: null, manualFields: [] },
+  ];
+  const res = recalculate(rows);
+  // Row 2: GH = 101.5 - 0.8 = 100.7, diff = 100.7 - 100.5 = 0.2
+  eq(res[1].diff, 0.2, "diff = GH(100.7) - FH(100.5) = 0.2");
+}
+
+// ── recalculate: diff null when FH missing ──────────
+group("recalculate — diff null when FH missing");
+{
+  const rows = [
+    { id: "1", point: "BM1", bs: 1.5, fs: null, gh: 100.0, fh: null, ih: null, diff: null, manualFields: ["gh"] },
+    { id: "2", point: "P1",  bs: null, fs: 0.8, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+  ];
+  const res = recalculate(rows);
+  eq(res[1].diff, null, "diff null when fh missing");
+}
+
+// ── recalculate: transfer point (BS + FS same row) ──
+group("recalculate — transfer point (BS + FS on same row)");
+{
+  // Row 1: setup with known GH
+  // Row 2: transfer — FS to close old setup, BS to open new setup
+  const rows = [
+    { id: "1", point: "BM1", bs: 1.5, fs: null, gh: 100.0, fh: null, ih: null, diff: null, manualFields: ["gh"] },
+    { id: "2", point: "TP1", bs: 2.0, fs: 1.2, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+    { id: "3", point: "P2",  bs: null, fs: 0.5, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+  ];
+  const res = recalculate(rows);
+  // Row 1: IH = 100 + 1.5 = 101.5
+  eq(res[0].ih, 101.5, "row 1 IH = 101.5");
+  // Row 2: GH = old IH(101.5) - FS(1.2) = 100.3, then IH = GH(100.3) + BS(2.0) = 102.3
+  eq(res[1].gh, 100.3, "transfer GH = 101.5 - 1.2 = 100.3");
+  eq(res[1].ih, 102.3, "transfer IH = 100.3 + 2.0 = 102.3");
+  // Row 3: GH = new IH(102.3) - FS(0.5) = 101.8
+  eq(res[2].gh, 101.8, "row 3 uses new IH: 102.3 - 0.5 = 101.8");
+}
+
+// ── recalculate: IH carries forward ─────────────────
+group("recalculate — IH carries forward across rows without BS");
+{
+  const rows = [
+    { id: "1", point: "BM1", bs: 1.5, fs: null, gh: 100.0, fh: null, ih: null, diff: null, manualFields: ["gh"] },
+    { id: "2", point: "P1",  bs: null, fs: 0.8, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+    { id: "3", point: "P2",  bs: null, fs: 1.2, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+  ];
+  const res = recalculate(rows);
+  // IH from row 1 = 101.5 carries to row 2 and row 3
+  eq(res[1].gh, 100.7, "P1 GH = 101.5 - 0.8");
+  eq(res[2].gh, 100.3, "P2 GH = 101.5 - 1.2");
+  eq(res[2].ih, null, "P2 IH null (no BS)");
+}
+
+// ── recalculate: empty rows / all nulls ─────────────
+group("recalculate — edge: empty rows");
+{
+  const rows = [
+    { id: "1", point: "", bs: null, fs: null, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+  ];
+  const res = recalculate(rows);
+  eq(res[0].gh, null, "empty row GH null");
+  eq(res[0].ih, null, "empty row IH null");
+  eq(res[0].diff, null, "empty row diff null");
+}
+
+// ── recalculate: immutability ───────────────────────
+group("recalculate — immutability (no mutation of input)");
+{
+  const original = { id: "1", point: "BM1", bs: 1.5, fs: null, gh: 100.0, fh: null, ih: null, diff: null, manualFields: ["gh"] };
+  const ghBefore = original.gh;
+  const ihBefore = original.ih;
+  const res = recalculate([original]);
+  eq(original.gh, ghBefore, "original gh unchanged");
+  eq(original.ih, ihBefore, "original ih unchanged");
+  assert(res[0] !== original, "returned object is a different reference");
+}
+
+// ── recalculate: first row with BS but no GH ────────
+group("recalculate — edge: first row BS only, no GH");
+{
+  // No manual GH, no previous IH, no FS → GH = null, IH = null
+  const rows = [
+    { id: "1", point: "X", bs: 1.5, fs: null, gh: null, fh: null, ih: null, diff: null, manualFields: [] },
+  ];
+  const res = recalculate(rows);
+  eq(res[0].gh, null, "GH null (no way to determine)");
+  eq(res[0].ih, null, "IH null (GH is null)");
+}
+
+// ── Summary ─────────────────────────────────────────
+const total = passed + failed;
+summaryEl.innerHTML = `<span class="${failed === 0 ? "pass" : "fail"}">${passed}/${total} passed</span>`;
+if (failed > 0) {
+  summaryEl.innerHTML += ` &mdash; <span class="fail">${failed} FAILED</span>`;
+}
+document.title = `calc.js tests — ${passed}/${total}`;
+</script>
+</body>
+</html>

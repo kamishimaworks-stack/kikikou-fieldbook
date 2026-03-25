@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#3b5998">
+  <title>器高式野帳</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+  <!-- View 1: File List -->
+  <section id="view-file-list" class="view">
+    <header class="header">
+      <h1>器高式野帳</h1>
+    </header>
+    <div id="file-list-container"></div>
+    <button id="btn-new-file" class="btn-primary btn-full">＋ 新規作成</button>
+  </section>
+
+  <!-- New File Dialog -->
+  <div id="dialog-new-file" class="dialog-overlay hidden">
+    <div class="dialog">
+      <label for="input-file-name">現場名</label>
+      <input type="text" id="input-file-name" placeholder="現場名を入力">
+      <fieldset class="radio-group">
+        <label><input type="radio" name="unit" value="m" checked>地盤高(m)</label>
+        <label><input type="radio" name="unit" value="mm">プラマイ(mm)</label>
+      </fieldset>
+      <div class="dialog-actions">
+        <button id="btn-dialog-cancel" class="btn-secondary">キャンセル</button>
+        <button id="btn-dialog-confirm" class="btn-primary">作成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View 2: Editor -->
+  <section id="view-editor" class="view hidden">
+    <header class="header">
+      <button id="btn-back" class="btn-icon" aria-label="戻る">←</button>
+      <span id="editor-title"></span>
+      <button id="btn-clear" class="btn-secondary">クリア</button>
+      <button id="btn-save" class="btn-primary">保存</button>
+    </header>
+    <div class="mode-toggle">
+      <button id="btn-mode-m" class="btn-mode active">地盤高(m)</button>
+      <button id="btn-mode-mm" class="btn-mode">プラマイ(mm)</button>
+    </div>
+    <div class="table-wrapper">
+      <table id="field-table">
+        <thead>
+          <tr>
+            <th class="sticky-col">測点</th>
+            <th>BS<br><small>後視</small></th>
+            <th class="computed">IH<br><small>器械高</small></th>
+            <th>FS<br><small>前視</small></th>
+            <th>GH<br><small>地盤高</small></th>
+            <th>FH<br><small>設計値</small></th>
+            <th class="computed">Diff<br><small>差</small></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <button id="btn-add-row" class="btn-primary btn-full">＋ 行を追加</button>
+  </section>
+
+  <!-- Custom Keypad -->
+  <div id="keypad-overlay" class="keypad-overlay hidden">
+    <div class="keypad">
+      <div class="keypad-header">
+        <button id="btn-sign" class="btn-sign">＋／－</button>
+        <span id="keypad-display" class="keypad-display"></span>
+        <button id="btn-done" class="btn-done">完了</button>
+      </div>
+      <div class="keypad-grid">
+        <button class="keypad-key" data-key="7">7</button>
+        <button class="keypad-key" data-key="8">8</button>
+        <button class="keypad-key" data-key="9">9</button>
+        <button class="keypad-key" data-key="4">4</button>
+        <button class="keypad-key" data-key="5">5</button>
+        <button class="keypad-key" data-key="6">6</button>
+        <button class="keypad-key" data-key="1">1</button>
+        <button class="keypad-key" data-key="2">2</button>
+        <button class="keypad-key" data-key="3">3</button>
+        <button class="keypad-key" data-key=".">.</button>
+        <button class="keypad-key" data-key="0">0</button>
+        <button class="keypad-key" data-key="⌫">⌫</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script src="calc.js"></script>
+  <script src="storage.js"></script>
+  <script src="keypad.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+  </script>
+
+</body>
+</html>
