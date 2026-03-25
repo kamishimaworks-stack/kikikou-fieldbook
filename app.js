@@ -268,8 +268,6 @@ var App = (function () {
     var mode = _currentFile.displayMode;
     var rows = _currentFile.rows;
     var html = "";
-    var colspan = _showIH ? 7 : 6;
-
     // Update thead IH column visibility
     var thIH = document.querySelector("#field-table thead th.computed");
     if (thIH) {
@@ -280,15 +278,7 @@ var App = (function () {
       var row = rows[i];
       var manual = Array.isArray(row.manualFields) ? row.manualFields : [];
 
-      // Insert zone between rows (not before first)
-      if (i > 0) {
-        html +=
-          '<tr class="insert-zone-row"><td colspan="' + colspan + '">' +
-            '<div class="insert-zone" data-index="' + i + '"></div>' +
-          '</td></tr>';
-      }
-
-      html += '<tr data-row-id="' + _escapeHtml(row.id) + '">';
+      html += '<tr data-row-id="' + _escapeHtml(row.id) + '" data-row-index="' + i + '">';
 
       // Column 1: Point (text input, native keyboard)
       html +=
@@ -359,7 +349,6 @@ var App = (function () {
   function _bindCellEvents() {
     _bindKeypadCells();
     _bindPointInputs();
-    _bindInsertZones();
     _bindRowGestures();
   }
 
@@ -423,48 +412,56 @@ var App = (function () {
     }
   }
 
-  /**
-   * Insert zones: long press to show insert menu (above/below).
-   */
-  function _bindInsertZones() {
-    var zones = document.querySelectorAll(".insert-zone");
-    for (var z = 0; z < zones.length; z++) {
-      _attachInsertZoneGesture(zones[z]);
+  // ===== Row Long Press: Context Menu (add above/below, delete) =====
+
+  function _bindRowGestures() {
+    var dataRows = document.querySelectorAll("#table-body tr[data-row-id]");
+    for (var r = 0; r < dataRows.length; r++) {
+      _attachRowGesture(dataRows[r]);
     }
   }
 
-  function _attachInsertZoneGesture(el) {
+  function _attachRowGesture(el) {
     var timer = null;
+    var moved = false;
+
     el.addEventListener("touchstart", function (e) {
-      var index = parseInt(el.dataset.index, 10);
+      moved = false;
       timer = setTimeout(function () {
-        _showInsertMenu(el, index);
-      }, 400);
+        if (!moved) {
+          _showRowMenu(el);
+        }
+      }, 500);
     }, { passive: true });
-    el.addEventListener("touchend", function () { clearTimeout(timer); }, { passive: true });
-    el.addEventListener("touchmove", function () { clearTimeout(timer); }, { passive: true });
-    // Desktop: click to show menu
-    el.addEventListener("click", function () {
-      var index = parseInt(el.dataset.index, 10);
-      _showInsertMenu(el, index);
-    });
+
+    el.addEventListener("touchmove", function () {
+      moved = true;
+      clearTimeout(timer);
+    }, { passive: true });
+
+    el.addEventListener("touchend", function () {
+      clearTimeout(timer);
+    }, { passive: true });
   }
 
-  function _showInsertMenu(anchorEl, index) {
-    // Remove existing menu if any
-    var old = document.getElementById("insert-menu");
+  function _showRowMenu(rowEl) {
+    var rowId = rowEl.dataset.rowId;
+    var rowIndex = parseInt(rowEl.dataset.rowIndex, 10);
+    if (!_currentFile) { return; }
+
+    // Remove existing menu
+    var old = document.getElementById("row-context-menu");
     if (old) { old.remove(); }
 
     var menu = document.createElement("div");
-    menu.id = "insert-menu";
+    menu.id = "row-context-menu";
     menu.className = "insert-menu";
 
     var btnAbove = document.createElement("button");
     btnAbove.textContent = "↑ 上に行を追加";
     btnAbove.addEventListener("click", function () {
       menu.remove();
-      if (!_currentFile) { return; }
-      _currentFile.rows.splice(index, 0, createRow());
+      _currentFile.rows.splice(rowIndex, 0, createRow());
       _recalcAndRender();
       _saveCurrentFile();
     });
@@ -473,20 +470,28 @@ var App = (function () {
     btnBelow.textContent = "↓ 下に行を追加";
     btnBelow.addEventListener("click", function () {
       menu.remove();
-      if (!_currentFile) { return; }
-      _currentFile.rows.splice(index + 1, 0, createRow());
+      _currentFile.rows.splice(rowIndex + 1, 0, createRow());
       _recalcAndRender();
       _saveCurrentFile();
     });
 
+    var btnDelete = document.createElement("button");
+    btnDelete.textContent = "この行を削除";
+    btnDelete.style.color = "var(--color-diff-minus)";
+    btnDelete.addEventListener("click", function () {
+      menu.remove();
+      _deleteRowById(rowId);
+    });
+
     menu.appendChild(btnAbove);
     menu.appendChild(btnBelow);
+    menu.appendChild(btnDelete);
 
-    // Position near the anchor
-    var rect = anchorEl.getBoundingClientRect();
+    // Position near the row
+    var rect = rowEl.getBoundingClientRect();
     menu.style.position = "fixed";
-    menu.style.left = Math.max(10, rect.left) + "px";
-    menu.style.top = rect.bottom + "px";
+    menu.style.left = Math.max(10, (rect.left + rect.right) / 2 - 80) + "px";
+    menu.style.top = Math.min(rect.bottom, window.innerHeight - 160) + "px";
     document.body.appendChild(menu);
 
     // Close on tap outside
@@ -498,50 +503,6 @@ var App = (function () {
         }
       });
     }, 10);
-  }
-
-  // ===== Row Deletion: Long Press & Left Swipe =====
-
-  function _bindRowGestures() {
-    var dataRows = document.querySelectorAll("#table-body tr[data-row-id]");
-    for (var r = 0; r < dataRows.length; r++) {
-      _attachRowGesture(dataRows[r]);
-    }
-  }
-
-  function _attachRowGesture(el) {
-    var timer = null;
-    var startX = 0;
-    var startY = 0;
-    var deleted = false;
-
-    el.addEventListener("touchstart", function (e) {
-      deleted = false;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      var rowId = el.dataset.rowId;
-      timer = setTimeout(function () {
-        if (!deleted) {
-          deleted = true;
-          _deleteRowById(rowId);
-        }
-      }, 600);
-    }, { passive: true });
-
-    el.addEventListener("touchmove", function (e) {
-      clearTimeout(timer);
-      if (deleted) { return; }
-      var dx = e.touches[0].clientX - startX;
-      var dy = Math.abs(e.touches[0].clientY - startY);
-      if (dx < -80 && dy < 40) {
-        deleted = true;
-        _deleteRowById(el.dataset.rowId);
-      }
-    }, { passive: true });
-
-    el.addEventListener("touchend", function () {
-      clearTimeout(timer);
-    }, { passive: true });
   }
 
   /**

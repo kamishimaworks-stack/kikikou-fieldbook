@@ -205,37 +205,7 @@ th.sticky-col {
   border-bottom: 2px solid var(--color-manual-indicator);
 }
 
-.insert-zone-row td {
-  height: auto;
-  min-height: 0;
-  padding: 0;
-  border: none;
-}
-
-/* Insert zone between rows */
-.insert-zone {
-  height: 6px;
-  cursor: pointer;
-  transition: height 0.15s ease, background-color 0.15s ease;
-  text-align: center;
-  line-height: 24px;
-  font-size: 0;
-  color: var(--color-primary);
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.insert-zone:hover,
-.insert-zone:active {
-  height: 24px;
-  background-color: rgba(59, 89, 152, 0.08);
-  font-size: 14px;
-}
-
-.insert-zone:hover::after,
-.insert-zone:active::after {
-  content: "\FF0B";
-}
+/* (Insert zones removed — row context menu used instead) */
 
 /* Insert menu popup */
 .insert-menu {
