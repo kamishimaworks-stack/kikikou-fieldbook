@@ -7,9 +7,30 @@ var App = (function () {
   var _deletedRow = null;
   var _deletedRowIndex = -1;
   var _toastTimer = null;
-  var _showIH = true;
+  var IH_VISIBLE_KEY = "kikikou_fieldbook_showIH";
+  var _showIH = _loadShowIH();
 
   // ===== Utility =====
+
+  /**
+   * Load IH column visibility from LocalStorage (hidden unless saved as shown).
+   * @returns {boolean}
+   */
+  function _loadShowIH() {
+    try {
+      return localStorage.getItem(IH_VISIBLE_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function _saveShowIH() {
+    try {
+      localStorage.setItem(IH_VISIBLE_KEY, _showIH ? "1" : "0");
+    } catch (e) {
+      console.error("_saveShowIH: failed to save", e);
+    }
+  }
 
   /**
    * Escape HTML special characters to prevent XSS.
@@ -220,6 +241,7 @@ var App = (function () {
     // IH column toggle
     document.getElementById("btn-toggle-ih").addEventListener("click", function () {
       _showIH = !_showIH;
+      _saveShowIH();
       _updateIHButton();
       _recalcAndRender();
     });
