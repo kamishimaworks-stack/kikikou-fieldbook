@@ -467,6 +467,8 @@ th.sticky-col {
   background-color: var(--color-bg);
   border-radius: 12px 12px 0 0;
   overflow: hidden;
+  /* Lift the bottom row off the iPhone home indicator (same as the GAS version) */
+  padding-bottom: max(50px, calc(env(safe-area-inset-bottom) + 16px));
   animation: slideUp 0.25s ease-out;
 }
 
