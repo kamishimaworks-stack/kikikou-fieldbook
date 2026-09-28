@@ -100,7 +100,9 @@ function isNum(v) {
  *     → FS = prevIH - GH (auto-calculated)
  *  3. IH determination:
  *     a. BS entered and GH determined → IH = GH + BS (new instrument height)
- *     b. No BS → carry forward previous IH (not displayed in cell)
+ *     b. BS entered but GH unknown → IH unknown (the instrument moved, so the
+ *        old IH must not be carried to the rows below)
+ *     c. No BS → carry forward previous IH (not displayed in cell)
  *  4. Diff: GH - FH if both exist, else null
  *  5. Transfer point (BS + FS on same row):
  *     GH computed from OLD IH first, then new IH = GH + BS
@@ -128,20 +130,21 @@ function recalculate(rows) {
 
     // --- FS reverse calculation ---
     // If GH is manual AND FS is NOT manual AND prevIH exists → FS = prevIH - GH
-    if (manual.includes("gh") && !manual.includes("fs") && isNum(prevIH) && isNum(gh)) {
-      out.fs = roundM(prevIH - gh);
+    // (IH unknown → drop the old reverse-calculated FS instead of keeping it)
+    if (manual.includes("gh") && !manual.includes("fs")) {
+      out.fs = isNum(prevIH) && isNum(gh) ? roundM(prevIH - gh) : null;
     }
 
     // --- IH determination ---
     let newIH = prevIH; // default: carry forward
-    if (isNum(row.bs) && isNum(gh)) {
-      newIH = roundM(gh + row.bs);
+    if (isNum(row.bs)) {
+      newIH = isNum(gh) ? roundM(gh + row.bs) : null;
     }
     // IH is stored on the row only when BS is entered (new setup)
     out.ih = isNum(row.bs) && isNum(gh) ? newIH : null;
 
     // Update carried IH for next rows
-    prevIH = isNum(newIH) ? newIH : prevIH;
+    prevIH = newIH;
 
     // --- Diff ---
     out.diff = isNum(gh) && isNum(row.fh) ? roundM(gh - row.fh) : null;

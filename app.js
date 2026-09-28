@@ -78,6 +78,8 @@ var App = (function () {
       for (var r = 0; r < rowCount; r++) {
         _currentFile.rows.push(createRow());
       }
+    } else {
+      _ensureTrailingEmptyRow();
     }
 
     document.getElementById("view-file-list").classList.add("hidden");
@@ -388,9 +390,27 @@ var App = (function () {
       }
       row.manualFields = mf;
 
+      _ensureTrailingEmptyRow();
       _recalcAndRender();
       _saveCurrentFile();
     });
+  }
+
+  /**
+   * Keep one empty row at the bottom so the next point can be entered right away.
+   */
+  function _ensureTrailingEmptyRow() {
+    var rows = _currentFile.rows;
+    var last = rows[rows.length - 1];
+    if (last && !_rowHasInput(last)) { return; }
+    rows.push(createRow());
+  }
+
+  // Computed GH may be stale before recalculation, so only a manual GH counts as input.
+  function _rowHasInput(row) {
+    var manual = Array.isArray(row.manualFields) ? row.manualFields : [];
+    return row.point !== "" || isNum(row.bs) || isNum(row.fs) ||
+           (manual.indexOf("gh") !== -1 && isNum(row.gh)) || isNum(row.fh);
   }
 
   /**
